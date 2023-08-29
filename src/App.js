@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import "./App.css";
 import Auth from "./components/Auth";
-import { db, auth } from "./config/firebase";
+import { db, auth, storage } from "./config/firebase";
 import {
   getDocs,
   collection,
@@ -10,6 +10,7 @@ import {
   updateDoc,
   doc,
 } from "firebase/firestore";
+import { ref, uploadBytes } from "firebase/storage";
 
 function App() {
   const [moviesList, setMoviesList] = useState([]);
@@ -23,6 +24,9 @@ function App() {
   // UPDATED TITLE
 
   const [updatedTitle, setUpdatedTitle] = useState("");
+
+  // File
+  const [fileUploaded, setFileUploaded] = useState(null);
 
   const movieCollectionRef = collection(db, "movies");
 
@@ -51,6 +55,16 @@ function App() {
   const updateMovieTitle = async (id) => {
     const movieDoc = doc(db, "movies", id);
     await updateDoc(movieDoc, { title: updatedTitle });
+  };
+
+  const uploadFile = async () => {
+    if (!fileUploaded) return;
+    const filesFolderRef = ref(storage, `projectfiles/${fileUploaded.name}`);
+    try {
+      await uploadBytes(filesFolderRef, fileUploaded);
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   useEffect(() => {
@@ -84,7 +98,7 @@ function App() {
         <input
           placeholder="Release Date..."
           type="number"
-          onChange={(e) => setnewReleaseDate(e.target.value)}
+          onChange={(e) => setnewReleaseDate(Number(e.target.value))}
           value={newReleaseDate}
         />
         <input
@@ -119,6 +133,13 @@ function App() {
             </button>
           </div>
         ))}
+      </div>
+      <div>
+        <input
+          type="file"
+          onChange={(e) => setFileUploaded(e.target.files[0])}
+        />
+        <button onClick={() => uploadFile()}>Upload File</button>
       </div>
     </div>
   );
